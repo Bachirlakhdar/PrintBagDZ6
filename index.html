@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PrintBag DZ — طلب طباعة الأكياس والعلب</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box}
+    :root{
+      --bg:#0a0612; --violet:#7c3aed; --violet-2:#8b5cf6; --violet-soft:#a78bfa;
+      --gold:#f59e0b; --line:rgba(139,92,246,.18);
+    }
+    body{font-family:'Cairo',sans-serif;background:var(--bg);min-height:100vh;color:#fff;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+      background-image:linear-gradient(rgba(139,92,246,.05) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(139,92,246,.05) 1px,transparent 1px);background-size:48px 48px;
+      mask-image:radial-gradient(ellipse 90% 60% at 50% 0%,#000 30%,transparent 75%)}
+    body::after{content:'';position:fixed;top:-260px;left:50%;transform:translateX(-50%);
+      width:900px;height:560px;border-radius:50%;
+      background:radial-gradient(ellipse,rgba(124,58,237,.28) 0%,transparent 70%);
+      pointer-events:none;z-index:0}
+
+    .glass{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.02));
+      backdrop-filter:blur(20px);border:1px solid var(--line);
+      box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 18px 50px -20px rgba(80,30,180,.4)}
+
+    /* Premium inputs */
+    .field{background:rgba(255,255,255,.045);border:1.5px solid rgba(139,92,246,.2);
+      color:#f3eefe;transition:border-color .2s,box-shadow .2s,background .2s;width:100%;
+      border-radius:14px;padding:13px 16px;font-family:'Cairo',sans-serif;font-size:.92rem;font-weight:600}
+    .field::placeholder{color:rgba(196,181,253,.35);font-weight:500}
+    .field:hover{border-color:rgba(139,92,246,.4)}
+    .field:focus{outline:none;border-color:var(--violet-soft);background:rgba(124,58,237,.1);
+      box-shadow:0 0 0 4px rgba(139,92,246,.16)}
+    .field option{background:#150733;color:#ede9fe}
+    select.field{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:left 14px center;padding-left:42px}
+    textarea.field{resize:vertical;min-height:96px}
+    .label{display:flex;align-items:center;gap:6px;color:#cbb9fb;font-size:.82rem;font-weight:700;margin-bottom:8px}
+    .input-icon{position:relative}
+    .input-icon .ic{position:absolute;top:50%;right:14px;transform:translateY(-50%);color:rgba(167,139,250,.55);pointer-events:none}
+    .input-icon .field{padding-right:44px}
+    .mono{font-family:'Space Mono',monospace}
+
+    /* Buttons */
+    .btn-purple{background:linear-gradient(135deg,#8b5cf6,#6d28d9 55%,#5b21b6);
+      box-shadow:0 10px 30px -8px rgba(124,58,237,.7),0 1px 0 rgba(255,255,255,.18) inset;
+      transition:transform .2s,box-shadow .2s,filter .2s;border:none;cursor:pointer;color:#fff;position:relative;overflow:hidden}
+    .btn-purple::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%);
+      transform:translateX(-120%);transition:transform .6s}
+    .btn-purple:hover{transform:translateY(-2px);box-shadow:0 16px 38px -8px rgba(124,58,237,.8)}
+    .btn-purple:hover::after{transform:translateX(120%)}
+    .btn-purple:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+    .check-wrap{display:flex;align-items:flex-start;gap:13px;padding:14px 16px;
+      background:rgba(124,58,237,.08);border:1.5px solid rgba(124,58,237,.2);
+      border-radius:14px;cursor:pointer;transition:all .2s}
+    .check-wrap:hover{background:rgba(124,58,237,.16);border-color:rgba(139,92,246,.4)}
+    .check-wrap:has(input:checked){background:rgba(124,58,237,.2);border-color:var(--violet-soft);
+      box-shadow:0 0 0 3px rgba(139,92,246,.12)}
+    input[type="checkbox"]{width:20px;height:20px;accent-color:var(--violet-2);cursor:pointer;margin-top:2px}
+
+    .info-cell{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+
+    .success-glow{background:linear-gradient(160deg,rgba(12,4,28,.97),rgba(34,14,78,.95));
+      border:1px solid rgba(139,92,246,.45);
+      box-shadow:0 0 70px rgba(109,40,217,.3),inset 0 1px 0 rgba(255,255,255,.06);border-radius:26px}
+
+    .step-badge{width:34px;height:34px;background:linear-gradient(135deg,#8b5cf6,#5b21b6);
+      border-radius:11px;display:inline-flex;align-items:center;justify-content:center;
+      font-size:.9rem;font-weight:900;flex-shrink:0;box-shadow:0 6px 16px -4px rgba(124,58,237,.7)}
+
+    .summary-card{background:linear-gradient(170deg,rgba(28,12,64,.85),rgba(12,5,28,.92));
+      border:1px solid rgba(139,92,246,.3);border-radius:24px;
+      box-shadow:0 30px 70px -30px rgba(80,30,180,.6),inset 0 1px 0 rgba(255,255,255,.06)}
+
+    .pay-card{background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(180,83,9,.06));
+      border:1px solid rgba(245,158,11,.28);border-radius:16px}
+
+    /* Upload dropzones */
+    .dropzone{border:2px dashed rgba(139,92,246,.35);border-radius:18px;padding:22px 16px;text-align:center;
+      cursor:pointer;transition:all .2s;background:rgba(124,58,237,.04)}
+    .dropzone:hover{border-color:var(--violet-soft);background:rgba(124,58,237,.12)}
+    .dropzone.gold{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.05)}
+    .dropzone.gold:hover{border-color:var(--gold);background:rgba(245,158,11,.12)}
+    .up-ic{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+
+    /* Animated bag */
+    @keyframes floatBag{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-16px) rotate(2deg)}}
+    @keyframes glowPulse{0%,100%{opacity:.45;transform:translateX(-50%) scale(.9)}50%{opacity:.8;transform:translateX(-50%) scale(1.05)}}
+    @keyframes shadowPulse{0%,100%{transform:translateX(-50%) scaleX(1);opacity:.5}50%{transform:translateX(-50%) scaleX(.78);opacity:.32}}
+    .bag-stage{position:relative;height:240px;display:flex;align-items:center;justify-content:center}
+    .bag-glow{position:absolute;top:30%;left:50%;width:240px;height:240px;border-radius:50%;
+      background:radial-gradient(circle,rgba(139,92,246,.55),transparent 65%);filter:blur(26px);
+      animation:glowPulse 4s ease-in-out infinite;z-index:0}
+    .bag-img{position:relative;z-index:2;max-height:215px;width:auto;
+      filter:drop-shadow(0 26px 30px rgba(0,0,0,.55));animation:floatBag 5s ease-in-out infinite}
+    .bag-shadow{position:absolute;bottom:8px;left:50%;width:150px;height:22px;border-radius:50%;
+      background:radial-gradient(ellipse,rgba(0,0,0,.55),transparent 70%);filter:blur(6px);
+      animation:shadowPulse 5s ease-in-out infinite;z-index:1}
+    .sparkle{position:absolute;z-index:3;color:#e9d5ff;animation:floatBag 5s ease-in-out infinite}
+
+    .trust-chip{display:flex;align-items:center;gap:8px;font-size:.74rem;color:#c4b5fd;font-weight:700}
+    .gold-text{background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b);background-size:200%;
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 3s infinite}
+    @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+    .fade-up{animation:fadeUp .5s ease forwards}
+    @keyframes pulse-ring{0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,.5)}50%{box-shadow:0 0 0 10px rgba(139,92,246,0)}}
+    .pulse{animation:pulse-ring 2s infinite}
+    ::-webkit-scrollbar{width:7px;height:7px}
+    ::-webkit-scrollbar-thumb{background:rgba(124,58,237,.4);border-radius:4px}
+
+    /* ===== Interactive Customizer ===== */
+    .cz-wrap{position:relative;overflow:hidden;border-radius:30px;
+      background:linear-gradient(165deg,rgba(30,12,60,.85),rgba(12,5,28,.92));
+      border:1px solid rgba(139,92,246,.3);
+      box-shadow:0 40px 80px -40px rgba(124,58,237,.6),inset 0 1px 0 rgba(255,255,255,.05)}
+    .cz-glow{position:absolute;width:380px;height:380px;border-radius:50%;
+      background:radial-gradient(circle,rgba(139,92,246,.35),transparent 65%);filter:blur(50px);
+      top:-160px;right:-120px;animation:glowPulse 7s ease-in-out infinite;pointer-events:none}
+    .cz-steps{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:26px}
+    .cz-dot{display:flex;align-items:center;gap:8px}
+    .cz-num{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-weight:900;font-size:.85rem;background:rgba(255,255,255,.06);color:#a78bfa;
+      border:1px solid var(--line);transition:.35s}
+    .cz-num.active{background:linear-gradient(135deg,#8b5cf6,#5b21b6);color:#fff;
+      box-shadow:0 0 0 4px rgba(139,92,246,.2);transform:scale(1.08)}
+    .cz-line{width:46px;height:2px;border-radius:2px;background:var(--line);transition:.35s}
+    .cz-line.active{background:linear-gradient(90deg,#8b5cf6,#c4b5fd)}
+    .cz-panel{display:none;animation:czFade .5s ease}
+    .cz-panel.active{display:block}
+    @keyframes czFade{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .cz-input{width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--line);
+      border-radius:14px;padding:13px 15px;color:#f5f3ff;font-size:.92rem;transition:.25s;outline:none}
+    .cz-input::placeholder{color:#7c6aa8}
+    .cz-input:focus{border-color:#8b5cf6;background:rgba(139,92,246,.08);
+      box-shadow:0 0 0 4px rgba(139,92,246,.18);transform:translateY(-1px)}
+    textarea.cz-input{resize:vertical;min-height:90px;line-height:1.6}
+    .cz-lbl{display:block;font-size:.8rem;font-weight:700;color:#c4b5fd;margin-bottom:7px}
+    /* radio product type */
+    .cz-type{cursor:pointer}
+    .cz-type input{position:absolute;opacity:0;pointer-events:none}
+    .cz-type .box{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
+      padding:18px 12px;border-radius:18px;border:1.5px solid var(--line);background:rgba(255,255,255,.03);
+      transition:.3s;color:#cbb9fb;height:100%}
+    .cz-type .box svg{width:30px;height:30px;transition:.3s}
+    .cz-type:hover .box{border-color:rgba(139,92,246,.5);transform:translateY(-4px)}
+    .cz-type input:checked + .box{border-color:#8b5cf6;background:rgba(139,92,246,.16);color:#fff;
+      box-shadow:0 16px 30px -16px rgba(124,58,237,.7)}
+    .cz-type input:checked + .box svg{color:#c4b5fd;transform:scale(1.12)}
+    .cz-type .tick{position:absolute;top:8px;left:8px;width:18px;height:18px;border-radius:50%;
+      background:#8b5cf6;display:none;align-items:center;justify-content:center}
+    .cz-type input:checked ~ .tick{display:flex}
+    /* color picker */
+    .cz-color{position:relative;width:100%;height:54px;border-radius:14px;border:1.5px solid var(--line);
+      overflow:hidden;cursor:pointer;padding:0;transition:.25s}
+    .cz-color:hover{border-color:#8b5cf6;transform:translateY(-2px)}
+    .cz-color::-webkit-color-swatch-wrapper{padding:0}
+    .cz-color::-webkit-color-swatch{border:none}
+    .cz-color::-moz-color-swatch{border:none}
+    /* live preview */
+    .cz-preview{position:relative;border-radius:22px;padding:24px;
+      background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+      border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+    .cz-stage{position:relative;width:170px;height:180px;animation:floatBag 5s ease-in-out infinite;
+      filter:drop-shadow(0 22px 30px rgba(0,0,0,.55))}
+    .cz-shape{width:100%;height:100%}
+    .cz-shape svg{width:100%;height:100%;display:block}
+    .cz-shape svg path,.cz-shape svg polygon,.cz-shape svg rect{transition:fill .4s,stroke .4s}
+    .cz-shape.swap{animation:czShapeIn .45s cubic-bezier(.34,1.56,.64,1)}
+    @keyframes czShapeIn{0%{transform:scale(.7) rotate(-6deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+    .cz-bag-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      font-weight:900;font-size:1rem;text-align:center;padding:30px 26px 26px;transition:color .4s;
+      word-break:break-word;line-height:1.3;pointer-events:none}
+    .cz-btn{width:100%;border:none;cursor:pointer;border-radius:16px;padding:15px;font-weight:900;font-size:1rem;
+      color:#fff;background:linear-gradient(135deg,#8b5cf6,#6d28d9);position:relative;overflow:hidden;
+      transition:.3s;box-shadow:0 16px 34px -14px rgba(124,58,237,.8)}
+    .cz-btn:hover{transform:translateY(-2px);box-shadow:0 22px 44px -14px rgba(124,58,237,.95)}
+    .cz-btn:active{transform:translateY(0)}
+    .cz-btn::after{content:"";position:absolute;top:0;left:-120%;width:60%;height:100%;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+      transform:skewX(-20deg);transition:.6s}
+    .cz-btn:hover::after{left:130%}
+    .cz-ghost{background:rgba(255,255,255,.05);border:1px solid var(--line);color:#c4b5fd;box-shadow:none}
+    .cz-ghost:hover{background:rgba(255,255,255,.09);transform:translateY(-2px);box-shadow:none}
+    @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+    .cz-pop{animation:pop .5s cubic-bezier(.34,1.56,.64,1) forwards}
+
+    /* Motivational branding section */
+    .brand-section{position:relative;overflow:hidden}
+    .why-card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+      border:1px solid var(--line);border-radius:22px;padding:26px 22px;text-align:center;
+      transition:transform .3s,border-color .3s,box-shadow .3s}
+    .why-card:hover{transform:translateY(-6px);border-color:rgba(139,92,246,.45);
+      box-shadow:0 24px 50px -24px rgba(124,58,237,.6)}
+    .why-ic{width:60px;height:60px;border-radius:18px;display:flex;align-items:center;justify-content:center;
+      margin:0 auto 16px;background:linear-gradient(135deg,#8b5cf6,#5b21b6);color:#fff;
+      box-shadow:0 12px 26px -8px rgba(124,58,237,.7);animation:floatBag 5s ease-in-out infinite}
+    .why-card:nth-child(2) .why-ic{animation-delay:.6s}
+    .why-card:nth-child(3) .why-ic{animation-delay:1.2s}
+    .why-card:nth-child(4) .why-ic{animation-delay:1.8s}
+    .stat-num{font-size:2.2rem;font-weight:900;line-height:1}
+
+    /* Animated marquee strip */
+    .marquee{overflow:hidden;white-space:nowrap;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+      background:rgba(124,58,237,.06);padding:14px 0}
+    .marquee-track{display:inline-flex;gap:46px;animation:marquee 22s linear infinite}
+    .marquee:hover .marquee-track{animation-play-state:paused}
+    .marquee span{display:inline-flex;align-items:center;gap:10px;color:#cbb9fb;font-weight:800;font-size:1rem;flex-shrink:0}
+    .marquee .dot{width:7px;height:7px;border-radius:50%;background:var(--gold)}
+    @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+    /* Footer */
+    .site-footer{position:relative;overflow:hidden;border-top:1px solid var(--line);
+      background:linear-gradient(180deg,rgba(12,5,28,.4),rgba(20,8,46,.9))}
+    .footer-blob{position:absolute;width:520px;height:520px;border-radius:50%;
+      background:radial-gradient(circle,rgba(124,58,237,.3),transparent 65%);filter:blur(40px);
+      bottom:-280px;left:50%;transform:translateX(-50%);animation:glowPulse 6s ease-in-out infinite;pointer-events:none}
+    .floaty{display:inline-block;animation:floatBag 4s ease-in-out infinite}
+    .footer-bag{height:84px;width:auto;filter:drop-shadow(0 14px 18px rgba(0,0,0,.5));animation:floatBag 5s ease-in-out infinite}
+
+    @media print{
+      body{background:#fff!important;color:#000!important}
+      body::before,body::after{display:none}
+      header,.hero,.article-section,.checkout-form,.summary-card,.brand-section,.marquee,.site-footer,.cz-section{display:none!important}
+      #successCard{display:block!important;background:#fff!important;border:2px solid #333!important;color:#000!important}
+      .info-cell{border:1px solid #ccc!important;background:#f9f9f9!important}
+      p,span,h2{color:#000!important}
+      .btn-purple,button{display:none!important}
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="sticky top-0 z-50 glass border-b border-purple-900/40">
+  <div class="max-w-6xl mx-auto px-5 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl btn-purple flex items-center justify-center pulse">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+      </div>
+      <div>
+        <span class="font-black text-lg tracking-wide">PrintBag <span class="text-purple-300">DZ</span></span>
+        <p class="text-purple-500 text-xs leading-none mt-0.5">طباعة الأكياس والعلب البلاستيكية</p>
+      </div>
+    </div>
+    <a href="admin.html" class="text-xs text-purple-300 hover:text-white transition border border-purple-800 hover:border-purple-600 hover:bg-purple-900/40 px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      الإدارة
+    </a>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero relative z-10">
+  <div class="max-w-6xl mx-auto px-4 pt-12 pb-4 text-center fade-up">
+    <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-purple-900/40 border border-purple-700/50 text-purple-200 mb-5">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      توصيل لجميع الـ 69 ولاية — Kazitour / ZR Express
+    </span>
+    <h1 class="text-3xl sm:text-5xl font-black text-white leading-tight mb-3 text-balance">
+      اطلب <span class="gold-text">أكياسك وعلبك</span> المطبوعة
+      <span class="text-purple-400">بضغطة زر واحدة</span>
+    </h1>
+    <p class="text-purple-400 text-sm mb-2">أسعار تنافسية — جودة عالية — توصيل سريع لكل الجزائر</p>
+  </div>
+</div>
+
+<!-- CHECKOUT -->
+<main class="relative z-10 max-w-6xl mx-auto px-4 pb-20 pt-4">
+  <div class="grid lg:grid-cols-[1fr_380px] gap-6 items-start">
+
+    <!-- LEFT: form steps -->
+    <div class="checkout-form space-y-5">
+
+      <!-- Step 1: Customer info -->
+      <section class="glass rounded-3xl p-6 sm:p-7 fade-up">
+        <h3 class="flex items-center gap-3 text-base font-black text-white mb-6">
+          <span class="step-badge">1</span> معلومات الزبون
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="label">الاسم الكامل <span class="text-purple-500">*</span></label>
+            <div class="input-icon">
+              <span class="ic"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+              <input id="fullName" type="text" required placeholder="محمد بن علي" class="field"/>
+            </div>
+          </div>
+          <div>
+            <label class="label">رقم الهاتف <span class="text-purple-500">*</span></label>
+            <div class="input-icon">
+              <span class="ic"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg></span>
+              <input id="phone" type="tel" required placeholder="05XXXXXXXX" class="field mono"/>
+            </div>
+          </div>
+          <div>
+            <label class="label">اسم المحل / العلامة التجارية <span class="text-purple-500">*</span></label>
+            <div class="input-icon">
+              <span class="ic"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l1-5h16l1 5M3 9h18M3 9v11a1 1 0 001 1h16a1 1 0 001-1V9M9 21v-6h6v6"/></svg></span>
+              <input id="shopName" type="text" required placeholder="متجر النجمة" class="field"/>
+            </div>
+          </div>
+          <div>
+            <label class="label">الولاية <span class="text-purple-500">*</span></label>
+            <select id="wilaya" required class="field">
+              <option value="">��� اختر الولاية —</option>
+              <option>01 - أدرار</option><option>02 - الشلف</option><option>03 - الأغواط</option>
+              <option>04 - أم البواقي</option><option>05 - باتنة</option><option>06 - بجاية</option>
+              <option>07 - بسكرة</option><option>08 - بشار</option><option>09 - البليدة</option>
+              <option>10 - البويرة</option><option>11 - تمنراست</option><option>12 - تبسة</option>
+              <option>13 - تلمسان</option><option>14 - تيارت</option><option>15 - تيزي وزو</option>
+              <option>16 - الجزائر العاصمة</option><option>17 - الجلفة</option><option>18 - جيجل</option>
+              <option>19 - سطيف</option><option>20 - سعيدة</option><option>21 - سكيكدة</option>
+              <option>22 - سيدي بلعباس</option><option>23 - عنابة</option><option>24 - قالمة</option>
+              <option>25 - قسنطينة</option><option>26 - المدية</option><option>27 - مستغانم</option>
+              <option>28 - المسيلة</option><option>29 - معسكر</option><option>30 - ورقلة</option>
+              <option>31 - وهران</option><option>32 - البيض</option><option>33 - إليزي</option>
+              <option>34 - برج بوعريريج</option><option>35 - بومرداس</option><option>36 - الطارف</option>
+              <option>37 - تندوف</option><option>38 - تيسمسيلت</option><option>39 - الوادي</option>
+              <option>40 - خنشلة</option><option>41 - سوق أهراس</option><option>42 - تيبازة</option>
+              <option>43 - ميلة</option><option>44 - عين الدفلى</option><option>45 - النعامة</option>
+              <option>46 - عين تموشنت</option><option>47 - غرداية</option><option>48 - غليزان</option>
+              <option>49 - تيميمون</option><option>50 - برج باجي مختار</option><option>51 - أولاد جلال</option>
+              <option>52 - بني عباس</option><option>53 - عين صالح</option><option>54 - عين قزام</option>
+              <option>55 - تقرت</option><option>56 - جانت</option><option>57 - المغير</option>
+              <option>58 - المنيعة</option><option>59 - آفلو</option><option>60 - بريكة</option>
+              <option>61 - القنطرة</option><option>62 - بير العاتر</option><option>63 - العريشة</option>
+              <option>64 - قصر الشلالة</option><option>65 - عين وسارة</option><option>66 - مسعد</option>
+              <option>67 - قصر البخاري</option><option>68 - بوسعادة</option><option>69 - الأبيض سيدي الشيخ</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="label">عنوان الشحن التفصيلي <span class="text-purple-500">*</span> <span class="text-purple-600 font-normal">(حي، شارع، رقم المبنى...)</span></label>
+            <div class="input-icon">
+              <span class="ic"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+              <input id="address" type="text" required placeholder="مثال: حي النصر، شارع الأمير عبد القادر، رقم 12، قسنطينة" class="field"/>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 2: Order details -->
+      <section class="glass rounded-3xl p-6 sm:p-7 fade-up">
+        <h3 class="flex items-center gap-3 text-base font-black text-white mb-6">
+          <span class="step-badge">2</span> تفاصيل الطلب
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div><label class="label">نوع المنتج</label>
+            <select id="bagType" class="field">
+              <option value="shopping">Sac Shopping</option>
+              <option value="expedition">Sac D'expédition</option>
+              <option value="carton">علبة كرطونية</option>
+              <option value="saccarton">كيس كرطوني</option>
+            </select></div>
+          <div><label class="label">المقاس</label>
+            <select id="bagSize" class="field">
+              <option value="20/30">20 / 30 cm</option>
+              <option value="30/40">30 / 40 cm</option>
+              <option value="40/50">40 / 50 cm</option>
+            </select></div>
+          <div>
+            <label class="label">الكمية <span class="text-purple-600 font-normal">(أدنى 200)</span></label>
+            <select id="bagQtySelect" class="field mb-2" onchange="handleQtyChange()">
+              <option value="500">500 حبة</option>
+              <option value="1000">1,000 حبة</option>
+              <option value="5000">5,000 حبة</option>
+              <option value="10000">10,000 حبة</option>
+              <option value="custom">أدخل كمية أخرى</option>
+            </select>
+            <input id="bagQtyCustom" type="number" min="200" placeholder="أدنى 200 — مثال: 300" class="field hidden" oninput="calcPrice()"/>
+          </div>
+        </div>
+
+        <label class="label mb-3">خيارات الطباعة الإضافية</label>
+        <div class="grid sm:grid-cols-2 gap-3 mb-2">
+          <label class="check-wrap"><input type="checkbox" id="rectoVerso"/>
+            <div><p class="text-sm font-bold text-white">طباعة وجهين — Recto / Verso</p>
+            <p class="text-xs text-purple-400 mt-0.5">يُضاف <span class="text-purple-200 font-bold">+12 دج</span> لكل حبة</p></div></label>
+          <label class="check-wrap"><input type="checkbox" id="color2"/>
+            <div><p class="text-sm font-bold text-white">إضافة لون ثاني في الطباعة</p>
+            <p class="text-xs text-purple-400 mt-0.5">يُضاف <span class="text-purple-200 font-bold">+15 دج</span> لكل حبة</p></div></label>
+        </div>
+        <p class="text-xs text-purple-600 px-1 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          السعر الأساسي يشمل طباعة لون واحد — جهة واحدة
+        </p>
+      </section>
+
+      <!-- Step 3: Design notes -->
+      <section class="glass rounded-3xl p-6 sm:p-7 fade-up">
+        <h3 class="flex items-center gap-3 text-base font-black text-white mb-4">
+          <span class="step-badge">3</span> ملاحظات التصميم <span class="text-purple-600 text-sm font-normal">(اختياري)</span>
+        </h3>
+        <textarea id="designNotes" class="field" placeholder="مثال: الشعار باللون الذهبي، النص: متجر النجمة، رابط الشعار: drive.google.com/..."></textarea>
+      </section>
+
+      <!-- Step 4: Uploads -->
+      <section class="glass rounded-3xl p-6 sm:p-7 fade-up">
+        <h3 class="flex items-center gap-3 text-base font-black text-white mb-6">
+          <span class="step-badge">4</span> رفع الشعار ووصل الدفع
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+          <!-- Logo upload -->
+          <div>
+            <label class="label">
+              <svg class="w-4 h-4 text-purple-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+              شعار المحل / اللوغو <span class="text-purple-600 font-normal">(اختياري)</span>
+            </label>
+            <input type="file" id="logoFile" accept="image/*,.pdf,.svg" class="hidden" onchange="handleLogoPreview()"/>
+            <div onclick="document.getElementById('logoFile').click()" class="dropzone" id="logoZone">
+              <div id="logoPlaceholder">
+                <div class="up-ic" style="background:rgba(124,58,237,.18);color:#c4b5fd">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <p class="text-purple-200 text-sm font-bold">انقر لرفع الشعار</p>
+                <p class="text-purple-600 text-xs mt-1">PNG · JPG · SVG · PDF — حجم أقصى 10MB</p>
+              </div>
+              <div id="logoPreview" class="hidden">
+                <img id="logoImg" alt="معاينة الشعار" class="max-h-28 mx-auto rounded-xl object-contain mb-2"/>
+                <p id="logoFileName" class="text-green-400 text-xs font-bold truncate"></p>
+                <p class="text-purple-500 text-xs mt-1">انقر لتغيير الصورة</p>
+              </div>
+            </div>
+            <button type="button" onclick="clearLogo()" id="clearLogoBtn" class="hidden mt-2 text-xs text-red-400 hover:text-red-300 transition w-full text-center font-bold">حذف الشعار</button>
+          </div>
+
+          <!-- Payment proof upload -->
+          <div>
+            <label class="label">
+              <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              وصل الدفع / إثبات التحويل <span class="text-amber-500 font-normal text-xs">(مطلوب للتأكيد)</span>
+            </label>
+            <input type="file" id="paymentFile" accept="image/*" class="hidden" onchange="handlePaymentPreview()"/>
+            <div onclick="document.getElementById('paymentFile').click()" class="dropzone gold" id="paymentZone">
+              <div id="paymentPlaceholder">
+                <div class="up-ic" style="background:rgba(245,158,11,.18);color:#fcd34d">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                </div>
+                <p class="text-amber-300 text-sm font-bold">انقر لرفع وصل الدفع</p>
+                <p class="text-amber-700 text-xs mt-1">سكرين شوت CCP / Baridimob — PNG · JPG</p>
+              </div>
+              <div id="paymentPreview" class="hidden">
+                <img id="paymentImg" alt="معاينة وصل الدفع" class="max-h-28 mx-auto rounded-xl object-contain mb-2"/>
+                <p id="paymentFileName" class="text-green-400 text-xs font-bold truncate"></p>
+                <p class="text-amber-600 text-xs mt-1">انقر لتغيير الصورة</p>
+              </div>
+            </div>
+            <button type="button" onclick="clearPayment()" id="clearPaymentBtn" class="hidden mt-2 text-xs text-red-400 hover:text-red-300 transition w-full text-center font-bold">حذف الوصل</button>
+          </div>
+        </div>
+
+        <!-- Payment info -->
+        <div class="mt-5 pay-card p-4">
+          <p class="text-xs text-amber-300 font-black mb-2 flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            معلومات الدفع
+          </p>
+          <p class="text-xs text-amber-100/90 leading-relaxed">لإتمام الدفع وتأكيد طلبك، يرجى التواصل معنا مباشرة عبر الواتساب وسنزوّدك بكل التفاصيل.</p>
+          <a href="https://wa.me/213778164903" target="_blank" rel="noopener" class="mt-3 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-sm transition" style="background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;box-shadow:0 12px 26px -12px rgba(37,211,102,.7)">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.05 0a11.82 11.82 0 018.413 3.488 11.82 11.82 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.82 9.82 0 001.51 5.26l-.999 3.648 3.978-.607z"/></svg>
+            تواصل عبر الواتساب — 0778164903
+          </a>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT: sticky order summary -->
+    <aside class="lg:sticky lg:top-24 fade-up">
+      <div class="summary-card p-6">
+        <p class="text-center text-xs font-black tracking-[.2em] uppercase text-purple-400 mb-1">معاينة المنتج</p>
+
+        <!-- Animated printed bag -->
+        <div class="bag-stage">
+          <div class="bag-glow"></div>
+          <svg class="sparkle w-4 h-4" style="top:18px;right:54px;animation-delay:.4s" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l1.6 6.4L20 10l-6.4 1.6L12 18l-1.6-6.4L4 10l6.4-1.6z"/></svg>
+          <svg class="sparkle w-3 h-3" style="bottom:48px;left:50px;animation-delay:1s" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l1.6 6.4L20 10l-6.4 1.6L12 18l-1.6-6.4L4 10l6.4-1.6z"/></svg>
+          <img src="bag.png" alt="كيس PrintBag DZ مطبوع عليه الشعار" class="bag-img"/>
+          <div class="bag-shadow"></div>
+        </div>
+
+        <h4 class="text-center font-black text-white text-lg -mt-1">كيس PrintBag <span class="text-purple-300">DZ</span></h4>
+        <p class="text-center text-purple-500 text-xs mb-5">طباعة احترافية لعلامتك التجارية</p>
+
+        <!-- Live price -->
+        <div class="space-y-2.5 mb-5">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-purple-400 font-semibold">سعر الوحدة</span>
+            <span id="unitPrice" class="text-purple-100 font-black mono">—</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-purple-400 font-semibold">الكمية</span>
+            <span id="qtyDisplay" class="text-purple-100 font-black mono">500</span>
+          </div>
+          <div class="h-px bg-purple-700/30 my-3"></div>
+          <div class="flex items-center justify-between">
+            <span class="text-white font-black">المجموع الكلي</span>
+            <span id="totalPrice" class="text-2xl font-black gold-text mono">—</span>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button id="submitBtn" onclick="submitOrder()"
+          class="btn-purple w-full py-4 rounded-2xl font-black text-lg text-white tracking-wide flex items-center justify-center gap-3">
+          <span>تأكيد الطلب وإرسال</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
+        <p id="statusMsg" class="text-center text-xs min-h-[1rem] text-purple-500 mt-3"></p>
+
+        <!-- Trust badges -->
+        <div class="grid grid-cols-3 gap-2 mt-5 pt-5 border-t border-purple-800/30">
+          <div class="trust-chip flex-col text-center gap-1.5">
+            <svg class="w-5 h-5 text-purple-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>دفع آمن</span>
+          </div>
+          <div class="trust-chip flex-col text-center gap-1.5">
+            <svg class="w-5 h-5 text-purple-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            <span>توصيل 69 ولا��ة</span>
+          </div>
+          <div class="trust-chip flex-col text-center gap-1.5">
+            <svg class="w-5 h-5 text-purple-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            <span>جودة مضمونة</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUCCESS CARD -->
+      <div id="successCard" class="hidden success-glow p-7 mt-5">
+        <div class="text-center mb-7">
+          <div class="w-16 h-16 rounded-full bg-green-500/15 border-2 border-green-500 flex items-center justify-center mx-auto mb-3">
+            <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h2 class="text-xl font-black text-green-400">تم استقبال طلبك بنجاح!</h2>
+          <p class="text-purple-400 text-sm mt-1">سيتم التواصل معك قريباً لتأكيد التفاصيل</p>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-6 text-sm">
+          <div class="info-cell col-span-2"><p class="text-purple-500 text-xs mb-1">رقم الطلب</p><p id="sc_orderId" class="text-white font-bold mono text-sm break-all"></p></div>
+          <div class="info-cell"><p class="text-purple-500 text-xs mb-1">الاسم</p><p id="sc_name" class="text-white font-bold"></p></div>
+          <div class="info-cell"><p class="text-purple-500 text-xs mb-1">الهاتف</p><p id="sc_phone" class="text-white font-bold mono"></p></div>
+          <div class="info-cell"><p class="text-purple-500 text-xs mb-1">الولاية</p><p id="sc_wilaya" class="text-white font-bold"></p></div>
+          <div class="info-cell col-span-2"><p class="text-purple-500 text-xs mb-1">عنوان الشحن</p><p id="sc_address" class="text-white font-bold"></p></div>
+          <div class="info-cell"><p class="text-purple-500 text-xs mb-1">المحل</p><p id="sc_shop" class="text-white font-bold"></p></div>
+          <div class="info-cell"><p class="text-purple-500 text-xs mb-1">نوع المنتج</p><p id="sc_type" class="text-white font-bold"></p></div>
+          <div class="info-cell"><p class="text-purple-500 text-xs mb-1">المقاس / الكمية</p><p class="text-white font-bold"><span id="sc_size"></span> — <span id="sc_qty"></span> حبة</p></div>
+          <div class="info-cell"><p class="text-purple-500 text-xs mb-1">طباعة وجهين</p><p id="sc_recto" class="text-white font-bold"></p></div>
+          <div class="info-cell"><p class="text-purple-500 text-xs mb-1">لون ثاني</p><p id="sc_color2" class="text-white font-bold"></p></div>
+          <div class="info-cell col-span-2 bg-purple-900/20 border-purple-700/40">
+            <p class="text-purple-400 text-xs mb-1">المجموع الكلي</p>
+            <p id="sc_total" class="text-3xl font-black text-white mono"></p>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl p-5 text-center mb-5">
+          <p class="text-gray-500 text-xs font-bold tracking-widest uppercase mb-3">QR Code — رقم الطلب</p>
+          <canvas id="qrcode" class="mx-auto"></canvas>
+          <p id="qr_orderIdText" class="text-gray-400 text-xs mt-2 mono"></p>
+        </div>
+        <button onclick="window.print()" class="w-full py-3 rounded-xl border border-purple-700 text-purple-300 hover:bg-purple-900/30 transition font-semibold text-sm flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          حفظ / طباعة بطاقة الطلب
+        </button>
+      </div>
+    </aside>
+
+  </div>
+</main>
+
+<!-- ===== INTERACTIVE & ANIMATED CUSTOMIZER ===== -->
+<section class="cz-section relative z-10 max-w-6xl mx-auto px-4 pt-4 pb-10">
+  <div class="text-center mb-8 fade-up">
+    <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-purple-900/40 border border-purple-700/50 text-purple-200 mb-4">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+      صمّم منتجك بنفسك — مباشر وتفاعلي
+    </span>
+    <h2 class="text-2xl sm:text-4xl font-black text-white mb-3 text-balance leading-tight">
+      اطلب وخصّص منتجك في <span class="gold-text">خطوتين</span>
+    </h2>
+    <p class="text-purple-300/80 text-sm max-w-2xl mx-auto leading-relaxed text-pretty">
+      اختر النوع، المقاس، وألوان الكيس والطباعة، وشاهد معاينة حيّة لمنتجك قبل الطلب.
+    </p>
+  </div>
+
+  <div class="cz-wrap p-6 sm:p-9 fade-up">
+    <div class="cz-glow"></div>
+
+    <!-- Steps indicator -->
+    <div class="cz-steps relative z-10">
+      <div class="cz-dot"><span id="czNum1" class="cz-num active">1</span></div>
+      <span id="czLine" class="cz-line"></span>
+      <div class="cz-dot"><span id="czNum2" class="cz-num">2</span></div>
+    </div>
+
+    <div class="relative z-10 grid lg:grid-cols-2 gap-8 items-start">
+      <!-- LEFT: form panels -->
+      <div>
+        <!-- STEP 1 -->
+        <div id="czPanel1" class="cz-panel active">
+          <h3 class="text-white font-black text-lg mb-5 flex items-center gap-2">
+            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            معلومات الشركة والتواصل
+          </h3>
+          <div class="grid gap-4">
+            <div>
+              <label class="cz-lbl">اسم الشركة التجارية</label>
+              <input id="czCompany" type="text" class="cz-input" placeholder="مثال: شركة النجمة للتجارة"/>
+            </div>
+            <div>
+              <label class="cz-lbl">وصف الطلب / نبذة عن الشركة</label>
+              <textarea id="czDesc" class="cz-input" placeholder="اكتب وصفاً مختصراً لمنتجك أو نشاط شركتك..."></textarea>
+            </div>
+            <div>
+              <label class="cz-lbl">رقم الهاتف</label>
+              <input id="czPhone" type="tel" class="cz-input mono" placeholder="صفر . خمسة . خمسة وخمسون . أربعة وأربعون . اثنان وثلاثون . أحد عشر"/>
+            </div>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label class="cz-lbl">حساب / رابط إنستغرام</label>
+                <input id="czInstagram" type="text" class="cz-input" placeholder="instagram.com/yourbrand"/>
+              </div>
+              <div>
+                <label class="cz-lbl">رابط فيسبوك</label>
+                <input id="czFacebook" type="text" class="cz-input" placeholder="facebook.com/yourbrand"/>
+              </div>
+            </div>
+          </div>
+          <button type="button" onclick="czGoStep(2)" class="cz-btn mt-7">
+            التالي — تخصيص المنتج
+          </button>
+        </div>
+
+        <!-- STEP 2 -->
+        <div id="czPanel2" class="cz-panel">
+          <h3 class="text-white font-black text-lg mb-5 flex items-center gap-2">
+            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+            تخصيص المنتج
+          </h3>
+
+          <label class="cz-lbl">نوع المنتج</label>
+          <div class="grid grid-cols-3 gap-3 mb-5">
+            <label class="cz-type relative">
+              <input type="radio" name="czType" value="أكياس بلاستيكية" checked onchange="czUpdatePreview()"/>
+              <span class="tick"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span class="box">
+                <svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M6 2l1 4h10l1-4M5 6h14l-1.2 15H6.2L5 6z"/><path d="M9 2v4M15 2v4"/></svg>
+                <span class="text-xs font-bold">أكياس بلاستيكية</span>
+              </span>
+            </label>
+            <label class="cz-type relative">
+              <input type="radio" name="czType" value="أكياس كرتونية" onchange="czUpdatePreview()"/>
+              <span class="tick"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span class="box">
+                <svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M5 7h14l-1 14H6L5 7z"/><path d="M8 7a4 4 0 018 0"/></svg>
+                <span class="text-xs font-bold">أكياس كرتونية</span>
+              </span>
+            </label>
+            <label class="cz-type relative">
+              <input type="radio" name="czType" value="علب كرتونية" onchange="czUpdatePreview()"/>
+              <span class="tick"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span class="box">
+                <svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/></svg>
+                <span class="text-xs font-bold">علب كرتونية</span>
+              </span>
+            </label>
+          </div>
+
+          <label class="cz-lbl">المقاس (سم) — الطول × العرض × الا��تفاع</label>
+          <div class="grid grid-cols-3 gap-3 mb-5">
+            <input id="czLen" type="number" min="1" class="cz-input mono text-center" placeholder="الطول"/>
+            <input id="czWidth" type="number" min="1" class="cz-input mono text-center" placeholder="العرض"/>
+            <input id="czHeight" type="number" min="1" class="cz-input mono text-center" placeholder="الارتفاع"/>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-4 mb-6">
+            <div>
+              <label class="cz-lbl">لون المنتج</label>
+              <input id="czBagColor" type="color" value="#7c3aed" class="cz-color" oninput="czUpdatePreview()"/>
+            </div>
+            <div>
+              <label class="cz-lbl">لون الكتابة / الطباعة</label>
+              <input id="czTextColor" type="color" value="#ffd166" class="cz-color" oninput="czUpdatePreview()"/>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <button type="button" onclick="czGoStep(1)" class="cz-btn cz-ghost" style="flex:0 0 38%">رجوع</button>
+            <button type="button" onclick="czSubmit()" class="cz-btn" style="flex:1">
+              إرسال الطلب المخصّص
+            </button>
+          </div>
+          <p id="czStatus" class="text-center text-sm text-purple-300 mt-4 min-h-[1.2em]"></p>
+        </div>
+      </div>
+
+      <!-- RIGHT: live preview -->
+      <div class="cz-preview lg:sticky lg:top-6">
+        <p class="text-xs font-bold text-purple-300 uppercase tracking-wider">معاينة حيّة</p>
+        <div class="cz-stage">
+          <div id="czShape" class="cz-shape"></div>
+          <span id="czBagText" class="cz-bag-text" style="color:#ffd166">علامتك هنا</span>
+        </div>
+        <div class="text-center">
+          <p id="czPreviewType" class="text-white font-black">أكياس بلاستيكية</p>
+          <p id="czPreviewSize" class="text-purple-400 text-xs mt-1">حدّد المقاس</p>
+        </div>
+        <div class="flex items-center gap-4 mt-1">
+          <div class="flex items-center gap-2 text-xs text-purple-300"><span class="w-4 h-4 rounded-full border border-white/20" id="czSwatchBag" style="background:#7c3aed"></span> لون المنتج</div>
+          <div class="flex items-center gap-2 text-xs text-purple-300"><span class="w-4 h-4 rounded-full border border-white/20" id="czSwatchText" style="background:#ffd166"></span> لون الطباعة</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY BRANDING — motivational section -->
+<section class="brand-section relative z-10 max-w-6xl mx-auto px-4 pb-6 pt-2">
+  <div class="text-center mb-9 fade-up">
+    <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-purple-900/40 border border-purple-700/50 text-purple-200 mb-4">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9z"/></svg>
+      لماذا تطبع علامتك التجارية؟
+    </span>
+    <h2 class="text-2xl sm:text-4xl font-black text-white mb-3 text-balance leading-tight">
+      كل كيس مطبوع هو <span class="gold-text">إعلان متنقل</span> يزيد مبيعاتك
+    </h2>
+    <p class="text-purple-300/80 text-sm max-w-2xl mx-auto leading-relaxed text-pretty">
+      عندما يحمل زبونك كيساً يحمل اسم محلك، فإنه يروّج لعلامتك مجاناً في الشارع، السوق، ووسائل النقل.
+      الطباعة الاحترافية تبني الثقة، تُميّزك عن المنافسين، وتجعل زبائنك يتذكرونك ويعودون إليك.
+    </p>
+  </div>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="why-card fade-up">
+      <div class="why-ic"><svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div>
+      <h3 class="text-white font-black mb-1.5">زيادة المبيعات</h3>
+      <p class="text-purple-300/70 text-xs leading-relaxed">العلامة الواضحة تجعل منتجك أكثر احترافية وتدفع الزبون للشراء والثقة فيك.</p>
+    </div>
+    <div class="why-card fade-up">
+      <div class="why-ic"><svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20"/></svg></div>
+      <h3 class="text-white font-black mb-1.5">إعلان متنقل</h3>
+      <p class="text-purple-300/70 text-xs leading-relaxed">كل كيس يتجوّل به زبونك يعرّف بمحلك أمام مئات الأشخاص يومياً بلا تكلفة.</p>
+    </div>
+    <div class="why-card fade-up">
+      <div class="why-ic"><svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.6L5.7 21.4 8 14 2 9.4h7.6z"/></svg></div>
+      <h3 class="text-white font-black mb-1.5">صورة احترافية</h3>
+      <p class="text-purple-300/70 text-xs leading-relaxed">التغليف المطبوع يرفع قيمة منتجك ويجعل علامتك تبدو أكبر وأكثر مصداقية.</p>
+    </div>
+    <div class="why-card fade-up">
+      <div class="why-ic"><svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-3-3.87M9 21H4v-2a4 4 0 013-3.87m6-5a4 4 0 10-6 0M21 8a4 4 0 01-3 3.87"/></svg></div>
+      <h3 class="text-white font-black mb-1.5">ولاء الزبائن</h3>
+      <p class="text-purple-300/70 text-xs leading-relaxed">الزبون يتذكر العلامة التي تركت انطباعاً، فيعود إليك ويوصي بك لمعارفه.</p>
+    </div>
+  </div>
+  <div class="grid grid-cols-3 gap-4 mt-7 text-center">
+    <div class="why-card"><p class="stat-num gold-text">+1000</p><p class="text-purple-300/70 text-xs mt-2 font-bold">عميل يثق بنا</p></div>
+    <div class="why-card"><p class="stat-num gold-text">69</p><p class="text-purple-300/70 text-xs mt-2 font-bold">ولاية نوصل إليها</p></div>
+    <div class="why-card"><p class="stat-num gold-text">48h</p><p class="text-purple-300/70 text-xs mt-2 font-bold">سرعة التنفيذ</p></div>
+  </div>
+</section>
+
+<!-- ANIMATED MARQUEE -->
+<div class="marquee relative z-10 my-8">
+  <div class="marquee-track">
+    <span><span class="dot"></span> طباعة عالية الجودة</span>
+    <span><span class="dot"></span> أسعار تنافسية</span>
+    <span><span class="dot"></span> توصيل لكل الجزائر</span>
+    <span><span class="dot"></span> تصميم مجاني للوجو</span>
+    <span><span class="dot"></span> أكياس · علب · كرطون</span>
+    <span><span class="dot"></span> PrintBag DZ</span>
+    <span><span class="dot"></span> طباعة عالية الجودة</span>
+    <span><span class="dot"></span> أسعار تنافسية</span>
+    <span><span class="dot"></span> توصيل لكل الجزائر</span>
+    <span><span class="dot"></span> تصميم مجاني للوجو</span>
+    <span><span class="dot"></span> أكياس · علب · كرطون</span>
+    <span><span class="dot"></span> PrintBag DZ</span>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer relative z-10 mt-2">
+  <div class="footer-blob"></div>
+  <div class="relative z-10 max-w-6xl mx-auto px-4 py-12">
+    <div class="flex flex-col items-center text-center gap-5">
+      <img src="bag.png" alt="كيس PrintBag مطبوع" class="footer-bag"/>
+      <div>
+        <h3 class="text-2xl font-black text-white">Print<span class="gold-text">Bag</span> DZ</h3>
+        <p class="text-purple-300/70 text-sm mt-1">علامتك التجارية تستحق أن تُرى — اطبعها معنا</p>
+      </div>
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        <a href="https://wa.me/213778164903" target="_blank" rel="noopener" aria-label="واتساب" class="floaty inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-900/40 border border-purple-700/50 text-purple-100 hover:bg-purple-800/50 transition text-sm font-bold">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.05 0a11.82 11.82 0 018.413 3.488 11.82 11.82 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.82 9.82 0 001.51 5.26l-.999 3.648 3.978-.607z"/></svg>
+          واتساب
+        </a>
+        <a href="https://facebook.com/printbagdz1" target="_blank" rel="noopener" aria-label="فيسبوك" class="floaty inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-900/40 border border-purple-700/50 text-purple-100 hover:bg-purple-800/50 transition text-sm font-bold" style="animation-delay:.3s">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>
+          فيسبوك
+        </a>
+        <a href="https://instagram.com/printbagdz1" target="_blank" rel="noopener" aria-label="إنستغرام" class="floaty inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-900/40 border border-purple-700/50 text-purple-100 hover:bg-purple-800/50 transition text-sm font-bold" style="animation-delay:.6s">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.43.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.43.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41-.56-.22-.96-.48-1.38-.9-.42-.42-.68-.82-.9-1.38-.16-.43-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.43-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16zM12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.79.31-1.46.72-2.13 1.38C1.35 2.68.94 3.35.63 4.14.33 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.31.79.72 1.46 1.38 2.13.67.66 1.34 1.07 2.13 1.38.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56.79-.31 1.46-.72 2.13-1.38.66-.67 1.07-1.34 1.38-2.13.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91-.31-.79-.72-1.46-1.38-2.13C20.32 1.35 19.65.94 18.86.63 18.1.33 17.22.13 15.95.07 14.67.01 14.26 0 12 0zm0 5.84A6.16 6.16 0 105.84 12 6.16 6.16 0 0012 5.84zm0 10.16A4 4 0 1116 12a4 4 0 01-4 4zm6.41-10.41a1.44 1.44 0 11-1.44-1.44 1.44 1.44 0 011.44 1.44z"/></svg>
+          إنستغرام
+        </a>
+      </div>
+      <p class="text-purple-400/50 text-xs mt-3">© 2026 PrintBag DZ — جميع الحقوق محفوظة</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const SHEET_API  = "YOUR_APPS_SCRIPT_URL";
+  const TG_TOKEN   = "8820131199:AAFMI_UmsDKGGvM4dZowApc3sHSfmlVHNCM";
+  const TG_CHAT_ID = "6777997484";
+
+  const PRICES = {
+    "20/30":{shopping:[23,21,19,18],expedition:[24,22,20,19],carton:[24,22,20,19],saccarton:[23,21,19,18]},
+    "30/40":{shopping:[28,25,22,21],expedition:[29,26,23,22],carton:[29,26,23,22],saccarton:[28,25,22,21]},
+    "40/50":{shopping:[34,31,29,28],expedition:[35,32,30,29],carton:[35,32,30,29],saccarton:[34,31,29,28]}
+  };
+  const QTYS=[500,1000,5000,10000];
+
+  function handleQtyChange(){
+    const sel=document.getElementById("bagQtySelect").value;
+    const customInput=document.getElementById("bagQtyCustom");
+    if(sel==="custom"){customInput.classList.remove("hidden");customInput.focus();}
+    else{customInput.classList.add("hidden");}
+    calcPrice();
+  }
+
+  function getQty(){
+    const sel=document.getElementById("bagQtySelect").value;
+    if(sel==="custom"){
+      const v=parseInt(document.getElementById("bagQtyCustom").value)||0;
+      return v;
+    }
+    return parseInt(sel);
+  }
+
+  function getUnitPrice(type,size,qty){
+    const idx=QTYS.indexOf(qty);
+    if(idx>=0) return PRICES[size][type][idx];
+    if(qty>=10000) return PRICES[size][type][3];
+    if(qty>=5000)  return PRICES[size][type][2];
+    if(qty>=1000)  return PRICES[size][type][1];
+    return PRICES[size][type][0];
+  }
+
+  function calcPrice(){
+    const type=document.getElementById("bagType").value;
+    const size=document.getElementById("bagSize").value;
+    const qty=getQty();
+    const rv=document.getElementById("rectoVerso").checked?12:0;
+    const c2=document.getElementById("color2").checked?15:0;
+    const unit=getUnitPrice(type,size,qty)+rv+c2;
+    const total=qty>0?unit*qty:0;
+    document.getElementById("unitPrice").textContent=qty>0?(unit.toLocaleString("ar-DZ")+" دج"):"—";
+    document.getElementById("qtyDisplay").textContent=qty>0?qty.toLocaleString("ar-DZ"):"0";
+    document.getElementById("totalPrice").textContent=qty>0?(total.toLocaleString("ar-DZ")+" دج"):"—";
+    return{type,size,qty,unit,total,rv:rv>0,c2:c2>0};
+  }
+
+  ["bagType","bagSize","bagQtySelect","rectoVerso","color2"]
+    .forEach(id=>document.getElementById(id).addEventListener("change",calcPrice));
+  calcPrice();
+
+  function setStatus(msg,color){
+    const el=document.getElementById("statusMsg");
+    el.textContent=msg;el.style.color=color||"#a78bfa";
+  }
+
+  function getTypeLabel(t){
+    return{shopping:"Sac Shopping",expedition:"Sac D'expédition",carton:"علبة كرطونية",saccarton:"كيس كرطوني"}[t]||t;
+  }
+
+  async function sendToSheets(order){
+    try{await fetch(SHEET_API,{method:"POST",body:JSON.stringify(order)});}
+    catch(e){console.warn("Sheets:",e);}
+  }
+
+  async function sendTelegramText(o){
+    const msg=
+`🛍️ *طلب جديد — PrintBag DZ*
+━━━━━━━━━━━━━━━━━━━━
+🔖 *رقم الطلب:* \`${o.orderId}\`
+👤 *الاسم:* ${o.fullName}
+📞 *الهاتف:* \`${o.phone}\`
+🏪 *المحل:* ${o.shopName}
+📍 *الولاية:* ${o.wilaya}
+🏠 *العنوان:* ${o.address}
+━━━━━━━━━━━━━━━━━━━━
+📦 *نوع المنتج:* ${o.bagType}
+📐 *المقاس:* ${o.bagSize}
+🔢 *الكمية:* ${o.quantity.toLocaleString()} حبة
+🖨 *طباعة وجهين:* ${o.rectoVerso?"✅ نعم":"❌ لا"}
+🎨 *لون ثاني:* ${o.color2?"✅ نعم":"❌ لا"}
+━━━━━━━━━━━━━━━━━━━━
+💰 *سعر الوحدة:* ${o.unitPrice} دج
+💵 *المجموع الكلي:* *${o.totalPrice.toLocaleString("ar-DZ")} دج*
+📝 *ملاحظات:* ${o.designNotes||"لا توجد"}
+📅 ${o.createdAtDisplay}`;
+    try{
+      await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({chat_id:TG_CHAT_ID,text:msg,parse_mode:"Markdown"})
+      });
+    }catch(e){console.warn("TG text:",e);}
+  }
+
+  function handleLogoPreview(){
+    const file=document.getElementById("logoFile").files[0];
+    if(!file)return;
+    document.getElementById("logoFileName").textContent=file.name;
+    document.getElementById("clearLogoBtn").classList.remove("hidden");
+    if(file.type.startsWith("image/")){
+      const reader=new FileReader();
+      reader.onload=e=>{
+        document.getElementById("logoImg").src=e.target.result;
+        document.getElementById("logoPlaceholder").classList.add("hidden");
+        document.getElementById("logoPreview").classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    } else {
+      document.getElementById("logoImg").src="";
+      document.getElementById("logoPlaceholder").classList.add("hidden");
+      document.getElementById("logoPreview").classList.remove("hidden");
+    }
+  }
+  function clearLogo(){
+    document.getElementById("logoFile").value="";
+    document.getElementById("logoPlaceholder").classList.remove("hidden");
+    document.getElementById("logoPreview").classList.add("hidden");
+    document.getElementById("clearLogoBtn").classList.add("hidden");
+  }
+  function handlePaymentPreview(){
+    const file=document.getElementById("paymentFile").files[0];
+    if(!file)return;
+    document.getElementById("paymentFileName").textContent=file.name;
+    document.getElementById("clearPaymentBtn").classList.remove("hidden");
+    if(file.type.startsWith("image/")){
+      const reader=new FileReader();
+      reader.onload=e=>{
+        document.getElementById("paymentImg").src=e.target.result;
+        document.getElementById("paymentPlaceholder").classList.add("hidden");
+        document.getElementById("paymentPreview").classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+  function clearPayment(){
+    document.getElementById("paymentFile").value="";
+    document.getElementById("paymentPlaceholder").classList.remove("hidden");
+    document.getElementById("paymentPreview").classList.add("hidden");
+    document.getElementById("clearPaymentBtn").classList.add("hidden");
+  }
+
+  async function sendTelegramFile(file, caption, asDocument=false){
+    try{
+      const form=new FormData();
+      form.append("chat_id", TG_CHAT_ID);
+      form.append("caption", caption);
+      if(asDocument){
+        form.append("document", file, file.name);
+        await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendDocument`,{method:"POST",body:form});
+      } else {
+        form.append("photo", file, file.name);
+        await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`,{method:"POST",body:form});
+      }
+    }catch(e){console.warn("TG file:",e);}
+  }
+
+  async function sendTelegramQR(o,qrDataUrl){
+    try{
+      const res=await fetch(qrDataUrl);
+      const blob=await res.blob();
+      const form=new FormData();
+      form.append("chat_id",TG_CHAT_ID);
+      form.append("photo",blob,"qr_"+o.orderId+".png");
+      form.append("caption",`📲 QR Code للطلب: ${o.orderId}\n👤 ${o.fullName} | 📞 ${o.phone}`);
+      await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`,{method:"POST",body:form});
+    }catch(e){console.warn("TG QR:",e);}
+  }
+
+  async function submitOrder(){
+    const fullName=document.getElementById("fullName").value.trim();
+    const phone=document.getElementById("phone").value.trim();
+    const shopName=document.getElementById("shopName").value.trim();
+    const wilaya=document.getElementById("wilaya").value;
+    const address=document.getElementById("address").value.trim();
+    const notes=document.getElementById("designNotes").value.trim();
+
+    if(!fullName||!phone||!shopName||!wilaya||!address){
+      alert("الرجاء تعبئة جميع الحقول الإلزامية (*)");return;
+    }
+    if(!/^0[5-7]\d{8}$/.test(phone)){
+      alert("رقم الهاتف غير صحيح — مثال: 0559123456");return;
+    }
+    const qty=getQty();
+    if(qty<200){alert("الحد الأدنى للطلب هو 200 قطعة");return;}
+
+    const btn=document.getElementById("submitBtn");
+    btn.disabled=true;
+    btn.innerHTML=`<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg> جارٍ الإرسال...`;
+    setStatus("جارٍ حفظ الطلب وإرساله...");
+
+    const {type,size,unit,total,rv,c2}=calcPrice();
+    const rand=Math.floor(1000+Math.random()*9000);
+    const orderId=`ORD-${phone}-${rand}`;
+    const now=new Date();
+
+    const order={
+      orderId,fullName,phone,shopName,wilaya,address,
+      bagType:getTypeLabel(type),
+      bagSize:size+"cm",quantity:qty,unitPrice:unit,totalPrice:total,
+      rectoVerso:rv,color2:c2,designNotes:notes,status:"قيد المعالجة",
+      createdAt:now.toISOString(),
+      createdAtDisplay:now.toLocaleDateString("ar-DZ",{year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit"})
+    };
+
+    const qrText=
+`PrintBag DZ
+رقم الطلب: ${orderId}
+المتجر: ${shopName||"—"}
+الاسم: ${fullName}
+الهاتف: ${phone}
+الولاية: ${wilaya}
+المنتج: ${order.bagType} ${order.bagSize}
+الكمية: ${qty}
+المجموع: ${total} دج
+واتساب: +213778164903
+إنستغرام: printbagdz1
+فيسبوك: printbagdz1`;
+
+    let qrDataUrl="";
+    try{
+      qrDataUrl=await QRCode.toDataURL(qrText,{width:240,margin:2,color:{dark:"#1a0040",light:"#ffffff"}});
+    }catch(e){console.warn("QR gen:",e);}
+
+    const orders=JSON.parse(localStorage.getItem("printbag_orders")||"[]");
+    orders.unshift({...order,qrDataUrl});
+    localStorage.setItem("printbag_orders",JSON.stringify(orders));
+
+    await sendToSheets(order);
+    setStatus("تم الحفظ بنجاح","#86efac");
+
+    await sendTelegramText(order);
+    if(qrDataUrl) await sendTelegramQR(order,qrDataUrl);
+
+    const logoFile=document.getElementById("logoFile").files[0];
+    if(logoFile){
+      setStatus("جارٍ إرسال الشعار...");
+      const isImg=logoFile.type.startsWith("image/");
+      await sendTelegramFile(
+        logoFile,
+        `🎨 شعار الزبون\n🔖 ${order.orderId}\n👤 ${order.fullName} | ${order.shopName}`,
+        !isImg
+      );
+    }
+
+    const payFile=document.getElementById("paymentFile").files[0];
+    if(payFile){
+      setStatus("جارٍ إرسال وصل الدفع...");
+      await sendTelegramFile(
+        payFile,
+        `🧾 وصل الدفع\n🔖 ${order.orderId}\n👤 ${order.fullName}\n💵 ${order.totalPrice.toLocaleString("ar-DZ")} دج`
+      );
+    }
+
+    setStatus("تم الإرسال بنجاح مع QR Code والصور","#86efac");
+
+    showSuccess(order,qrDataUrl);
+
+    btn.disabled=false;
+    btn.innerHTML=`<span>تأكيد الطلب وإرسال</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+  }
+
+  function showSuccess(o,qrDataUrl){
+    document.getElementById("successCard").classList.remove("hidden");
+    document.getElementById("successCard").scrollIntoView({behavior:"smooth"});
+    document.getElementById("sc_orderId").textContent=o.orderId;
+    document.getElementById("sc_name").textContent=o.fullName;
+    document.getElementById("sc_phone").textContent=o.phone;
+    document.getElementById("sc_wilaya").textContent=o.wilaya;
+    document.getElementById("sc_address").textContent=o.address;
+    document.getElementById("sc_shop").textContent=o.shopName;
+    document.getElementById("sc_type").textContent=o.bagType;
+    document.getElementById("sc_size").textContent=o.bagSize;
+    document.getElementById("sc_qty").textContent=o.quantity.toLocaleString("ar-DZ");
+    document.getElementById("sc_recto").textContent=o.rectoVerso?"✅ نعم (+12 دج)":"❌ لا";
+    document.getElementById("sc_color2").textContent=o.color2?"✅ نعم (+15 دج)":"❌ لا";
+    document.getElementById("sc_total").textContent=o.totalPrice.toLocaleString("ar-DZ")+" دج";
+    document.getElementById("qr_orderIdText").textContent=o.orderId;
+    if(qrDataUrl){
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.getElementById("qrcode");
+        canvas.width=img.width;canvas.height=img.height;
+        canvas.getContext("2d").drawImage(img,0,0);
+      };
+      img.src=qrDataUrl;
+    }
+    ["fullName","phone","shopName","address","designNotes"].forEach(id=>document.getElementById(id).value="");
+    document.getElementById("wilaya").value="";
+    document.getElementById("rectoVerso").checked=false;
+    document.getElementById("color2").checked=false;
+    document.getElementById("bagQtySelect").value="500";
+    document.getElementById("bagQtyCustom").classList.add("hidden");
+    calcPrice();
+    clearLogo();
+    clearPayment();
+  }
+
+  /* ===== Interactive Customizer logic ===== */
+  function czGoStep(n){
+    document.getElementById("czPanel1").classList.toggle("active",n===1);
+    document.getElementById("czPanel2").classList.toggle("active",n===2);
+    document.getElementById("czNum1").classList.toggle("active",n>=1);
+    document.getElementById("czNum2").classList.toggle("active",n>=2);
+    document.getElementById("czLine").classList.toggle("active",n>=2);
+    document.querySelector(".cz-wrap").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+
+  function czGetType(){
+    const el=document.querySelector('input[name="czType"]:checked');
+    return el?el.value:"أكياس بلاستيكية";
+  }
+
+  function czShade(hex,p){ // darken hex by p (0..1)
+    const n=parseInt(hex.slice(1),16);
+    let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+    r=Math.round(r*(1-p));g=Math.round(g*(1-p));b=Math.round(b*(1-p));
+    return `#${(1<<24|r<<16|g<<8|b).toString(16).slice(1)}`;
+  }
+  function czShapeSVG(type,c){
+    const dark=czShade(c,.28),mid=czShade(c,.14);
+    if(type==="علب كرتونية"){
+      // box / carton
+      return `<svg viewBox="0 0 170 180" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="85,18 150,48 85,78 20,48" fill="${mid}"/>
+        <polygon points="20,48 85,78 85,158 20,128" fill="${dark}"/>
+        <polygon points="150,48 85,78 85,158 150,128" fill="${c}"/>
+        <polyline points="85,78 85,158" fill="none" stroke="${czShade(c,.4)}" stroke-width="1"/>
+      </svg>`;
+    }
+    if(type==="أكياس كرتونية"){
+      // paper bag with flat handles and folded top
+      return `<svg viewBox="0 0 170 180" xmlns="http://www.w3.org/2000/svg">
+        <path d="M62 24 q23 -16 46 0" fill="none" stroke="${dark}" stroke-width="5" stroke-linecap="round"/>
+        <rect x="40" y="36" width="90" height="18" rx="2" fill="${mid}"/>
+        <path d="M40 52 H130 L124 166 H46 Z" fill="${c}"/>
+        <path d="M85 52 V166" stroke="${czShade(c,.18)}" stroke-width="1.5"/>
+        <path d="M40 52 H130 L126 70 H44 Z" fill="${mid}" opacity=".5"/>
+      </svg>`;
+    }
+    // plastic bag (default) with loop handles
+    return `<svg viewBox="0 0 170 180" xmlns="http://www.w3.org/2000/svg">
+      <path d="M58 40 V20 a16 14 0 0 1 26 0 V40" fill="none" stroke="${dark}" stroke-width="6" stroke-linecap="round"/>
+      <path d="M86 40 V20 a16 14 0 0 1 26 0 V40" fill="none" stroke="${dark}" stroke-width="6" stroke-linecap="round"/>
+      <path d="M38 40 H132 L124 168 H46 Z" fill="${c}"/>
+      <path d="M38 40 H132 L130 56 H40 Z" fill="${mid}"/>
+    </svg>`;
+  }
+
+  let czLastType=null;
+  function czUpdatePreview(){
+    const bagColor=document.getElementById("czBagColor").value;
+    const textColor=document.getElementById("czTextColor").value;
+    const company=document.getElementById("czCompany").value.trim();
+    const type=czGetType();
+    const len=document.getElementById("czLen").value;
+    const w=document.getElementById("czWidth").value;
+    const h=document.getElementById("czHeight").value;
+
+    const shape=document.getElementById("czShape");
+    shape.innerHTML=czShapeSVG(type,bagColor);
+    if(type!==czLastType){
+      shape.classList.remove("swap");void shape.offsetWidth;shape.classList.add("swap");
+      czLastType=type;
+    }
+    const txt=document.getElementById("czBagText");
+    txt.style.color=textColor;
+    txt.textContent=company||"علامتك هنا";
+    document.getElementById("czSwatchBag").style.background=bagColor;
+    document.getElementById("czSwatchText").style.background=textColor;
+    document.getElementById("czPreviewType").textContent=type;
+    document.getElementById("czPreviewSize").textContent=
+      (len&&w&&h)?`${len} × ${w} × ${h} سم`:"حدّد المقاس";
+  }
+  ["czCompany","czLen","czWidth","czHeight"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener("input",czUpdatePreview);
+  });
+
+  async function czSubmit(){
+    const company=document.getElementById("czCompany").value.trim();
+    const desc=document.getElementById("czDesc").value.trim();
+    const phone=document.getElementById("czPhone").value.trim();
+    const insta=document.getElementById("czInstagram").value.trim();
+    const fb=document.getElementById("czFacebook").value.trim();
+    const type=czGetType();
+    const len=document.getElementById("czLen").value;
+    const w=document.getElementById("czWidth").value;
+    const h=document.getElementById("czHeight").value;
+    const bagColor=document.getElementById("czBagColor").value;
+    const textColor=document.getElementById("czTextColor").value;
+    const st=document.getElementById("czStatus");
+
+    if(!company||!phone){st.textContent="الرجاء إدخال اسم الشركة ورقم الهاتف";st.style.color="#fca5a5";return;}
+    if(!/^0[5-7]\d{8}$/.test(phone)){st.textContent="رقم الهاتف غير صحيح — مثال: 0559123456";st.style.color="#fca5a5";return;}
+
+    st.textContent="جارٍ إرسال طلبك المخصّص...";st.style.color="#a78bfa";
+
+    const rand=Math.floor(1000+Math.random()*9000);
+    const orderId=`CZ-${phone}-${rand}`;
+    const now=new Date();
+    const sizeStr=(len&&w&&h)?`${len} × ${w} × ${h} سم`:"غير محدد";
+
+    const order={
+      orderId, fullName:company, phone, shopName:company,
+      wilaya:"—", address:"تخصيص مباشر",
+      bagType:type, bagSize:sizeStr, quantity:0,
+      rectoVerso:false, color2:false,
+      unitPrice:0, totalPrice:0,
+      designNotes:`${desc?desc+" | ":""}لون المنتج: ${bagColor} | لون الطباعة: ${textColor}${insta?" | إنستغرام: "+insta:""}${fb?" | فيسبوك: "+fb:""}`,
+      status:"pending",
+      createdAt:now.toISOString(),
+      createdAtDisplay:now.toLocaleString("ar-DZ")
+    };
+
+    const msg=
+`🎨 *طلب تخصيص جديد — PrintBag DZ*
+━━━━━━━━━━━━━━━━━━━━
+🔖 *رقم الطلب:* \`${orderId}\`
+🏢 *الشركة:* ${company}
+📞 *الهاتف:* \`${phone}\`
+📝 *الوصف:* ${desc||"—"}
+📸 *إنستغرام:* ${insta||"—"}
+📘 *فيسبوك:* ${fb||"—"}
+━━━━━━━━━━━━━━━━━━━━
+📦 *نوع المنتج:* ${type}
+📐 *المقاس:* ${sizeStr}
+🎨 *لون المنتج:* ${bagColor}
+🖌 *لون الطباعة:* ${textColor}
+📅 ${order.createdAtDisplay}`;
+
+    try{
+      await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({chat_id:TG_CHAT_ID,text:msg,parse_mode:"Markdown"})
+      });
+    }catch(e){console.warn("CZ TG:",e);}
+
+    // Build QR with the customer's real info
+    const qrText=
+`PrintBag DZ
+رقم الطلب: ${orderId}
+الشركة: ${company}
+الهاتف: ${phone}
+المنتج: ${type} ${sizeStr}
+إنستغرام: ${insta||"printbagdz1"}
+فيسبوك: ${fb||"printbagdz1"}
+واتساب: +213778164903`;
+
+    let qrDataUrl="";
+    try{
+      qrDataUrl=await QRCode.toDataURL(qrText,{width:240,margin:2,color:{dark:"#1a0040",light:"#ffffff"}});
+    }catch(e){console.warn("CZ QR:",e);}
+    order.qrDataUrl=qrDataUrl;
+
+    try{
+      if(qrDataUrl){
+        const res=await fetch(qrDataUrl);
+        const blob=await res.blob();
+        const form=new FormData();
+        form.append("chat_id",TG_CHAT_ID);
+        form.append("photo",blob,"qr_"+orderId+".png");
+        form.append("caption",`📲 QR طلب التخصيص: ${orderId}\n🏢 ${company} | 📞 ${phone}`);
+        await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`,{method:"POST",body:form});
+      }
+    }catch(e){console.warn("CZ TG QR:",e);}
+
+    try{
+      const orders=JSON.parse(localStorage.getItem("printbag_orders")||"[]");
+      orders.unshift(order);
+      localStorage.setItem("printbag_orders",JSON.stringify(orders));
+    }catch(e){console.warn("CZ save:",e);}
+
+    // Show success + QR preview
+    const qrImg=qrDataUrl?`<img src="${qrDataUrl}" alt="QR طلبك" class="mx-auto mt-4 rounded-xl border border-purple-700/40" style="width:170px;height:170px"/>`:"";
+    st.innerHTML=
+      `<span class="cz-pop inline-block text-green-300 font-black text-base">✓ تم استلام طلبك المخصّص — سنتواصل معك عبر الواتساب</span>
+       <span class="block text-purple-300 text-xs mt-2">رقم الطلب: <b class="mono">${orderId}</b></span>
+       ${qrImg}
+       <span class="block text-purple-400/70 text-[11px] mt-2">امسح الكود للاطلاع على بيانات طلبك (الشركة، الهاتف، التواصل)</span>`;
+  }
+
+  czUpdatePreview();
+</script>
+</body>
+</html>
