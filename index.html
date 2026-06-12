@@ -863,9 +863,8 @@
 </footer>
 
 <script>
-  const SHEET_API  = "YOUR_APPS_SCRIPT_URL";
-  const TG_TOKEN   = "8820131199:AAFMI_UmsDKGGvM4dZowApc3sHSfmlVHNCM";
-  const TG_CHAT_ID = "6777997484";
+  // كل الإرسال يتم عبر Cloudflare Worker — لا توجد أي توكنات في هذا الكود
+  const WORKER_API = "https://printbag-telegram.bachirlakhdar81.workers.dev/";
 
   const PRICES = {
     "20/30":{shopping:[23,21,19,18],expedition:[24,22,20,19],carton:[24,22,20,19],saccarton:[23,21,19,18]},
@@ -927,36 +926,13 @@
     return{shopping:"Sac Shopping",expedition:"Sac D'expédition",carton:"علبة كرطونية",saccarton:"كيس كرطوني"}[t]||t;
   }
 
-  async function sendToSheets(order){
-    try{await fetch(SHEET_API,{method:"POST",body:JSON.stringify(order)});}
-    catch(e){console.warn("Sheets:",e);}
-  }
-
+  // إرسال بيانات الطلب (نص) إلى Telegram عبر Cloudflare Worker الآمن
   async function sendTelegramText(o){
-    const msg=
-`🛍️ *طلب جديد — PrintBag DZ*
-━━━━━━━━━━━━━━━━━━━━
-🔖 *رقم الطلب:* \`${o.orderId}\`
-👤 *الاسم:* ${o.fullName}
-📞 *الهاتف:* \`${o.phone}\`
-🏪 *المحل:* ${o.shopName}
-📍 *الولاية:* ${o.wilaya}
-🏠 *العنوان:* ${o.address}
-━━━━━━━━━━━━━━━━━━━━
-📦 *نوع المنتج:* ${o.bagType}
-📐 *المقاس:* ${o.bagSize}
-🔢 *الكمية:* ${o.quantity.toLocaleString()} حبة
-🖨 *طباعة وجهين:* ${o.rectoVerso?"✅ نعم":"❌ لا"}
-🎨 *لون ثاني:* ${o.color2?"✅ نعم":"❌ لا"}
-━━━━━━━━━━━━━━━━━━━━
-💰 *سعر الوحدة:* ${o.unitPrice} دج
-💵 *المجموع الكلي:* *${o.totalPrice.toLocaleString("ar-DZ")} دج*
-📝 *ملاحظات:* ${o.designNotes||"لا توجد"}
-📅 ${o.createdAtDisplay}`;
     try{
-      await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
-        method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({chat_id:TG_CHAT_ID,text:msg,parse_mode:"Markdown"})
+      await fetch(WORKER_API,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(o)
       });
     }catch(e){console.warn("TG text:",e);}
   }
@@ -1011,15 +987,10 @@
   async function sendTelegramFile(file, caption, asDocument=false){
     try{
       const form=new FormData();
-      form.append("chat_id", TG_CHAT_ID);
+      form.append("file", file, file.name);
       form.append("caption", caption);
-      if(asDocument){
-        form.append("document", file, file.name);
-        await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendDocument`,{method:"POST",body:form});
-      } else {
-        form.append("photo", file, file.name);
-        await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`,{method:"POST",body:form});
-      }
+      form.append("type", asDocument?"document":"photo");
+      await fetch(WORKER_API,{method:"POST",body:form});
     }catch(e){console.warn("TG file:",e);}
   }
 
@@ -1028,10 +999,10 @@
       const res=await fetch(qrDataUrl);
       const blob=await res.blob();
       const form=new FormData();
-      form.append("chat_id",TG_CHAT_ID);
-      form.append("photo",blob,"qr_"+o.orderId+".png");
+      form.append("file",blob,"qr_"+o.orderId+".png");
       form.append("caption",`📲 QR Code للطلب: ${o.orderId}\n👤 ${o.fullName} | 📞 ${o.phone}`);
-      await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`,{method:"POST",body:form});
+      form.append("type","photo");
+      await fetch(WORKER_API,{method:"POST",body:form});
     }catch(e){console.warn("TG QR:",e);}
   }
 
@@ -1094,7 +1065,6 @@
     orders.unshift({...order,qrDataUrl});
     localStorage.setItem("printbag_orders",JSON.stringify(orders));
 
-    await sendToSheets(order);
     setStatus("تم الحفظ بنجاح","#86efac");
 
     await sendTelegramText(order);
@@ -1298,9 +1268,9 @@
 📅 ${order.createdAtDisplay}`;
 
     try{
-      await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
+      await fetch(WORKER_API,{
         method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({chat_id:TG_CHAT_ID,text:msg,parse_mode:"Markdown"})
+        body:JSON.stringify({customMessage:msg})
       });
     }catch(e){console.warn("CZ TG:",e);}
 
@@ -1326,10 +1296,10 @@
         const res=await fetch(qrDataUrl);
         const blob=await res.blob();
         const form=new FormData();
-        form.append("chat_id",TG_CHAT_ID);
-        form.append("photo",blob,"qr_"+orderId+".png");
+        form.append("file",blob,"qr_"+orderId+".png");
         form.append("caption",`📲 QR طلب التخصيص: ${orderId}\n🏢 ${company} | 📞 ${phone}`);
-        await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`,{method:"POST",body:form});
+        form.append("type","photo");
+        await fetch(WORKER_API,{method:"POST",body:form});
       }
     }catch(e){console.warn("CZ TG QR:",e);}
 
