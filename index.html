@@ -214,6 +214,17 @@
     .marquee .dot{width:7px;height:7px;border-radius:50%;background:var(--gold)}
     @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
+    /* Videos section */
+    .pb-videos{padding:56px 20px;text-align:center;background:#0a0612;border-top:1px solid rgba(139,92,246,.18);position:relative;z-index:10}
+    .pb-videos__title{font-size:28px;font-weight:800;margin:0 0 8px;color:#fff;font-family:'Cairo',sans-serif}
+    .pb-videos__sub{color:#c4b5fd;margin:0 0 32px;font-size:16px;font-family:'Cairo',sans-serif}
+    .pb-videos__grid{display:grid;grid-template-columns:repeat(2,minmax(0,300px));gap:20px;justify-content:center;max-width:680px;margin:0 auto}
+    .pb-video{position:relative;width:100%;min-height:300px;aspect-ratio:9/16;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.4);background:#000}
+    .pb-video iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+    .pb-videos__wa{display:inline-flex;align-items:center;gap:10px;margin-top:32px;padding:14px 28px;background:#25D366;color:#fff;font-size:17px;font-weight:700;text-decoration:none;border-radius:50px;font-family:'Cairo',sans-serif;box-shadow:0 6px 18px rgba(37,211,102,.4);transition:transform .15s ease,box-shadow .15s ease}
+    .pb-videos__wa:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(37,211,102,.5)}
+    @media (max-width:640px){.pb-videos__grid{grid-template-columns:minmax(0,320px);max-width:320px}.pb-videos__title{font-size:22px}}
+
     /* Footer */
     .site-footer{position:relative;overflow:hidden;border-top:1px solid var(--line);
       background:linear-gradient(180deg,rgba(12,5,28,.4),rgba(20,8,46,.9))}
@@ -226,7 +237,7 @@
     @media print{
       body{background:#fff!important;color:#000!important}
       body::before,body::after{display:none}
-      header,.hero,.article-section,.checkout-form,.summary-card,.brand-section,.marquee,.site-footer,.cz-section{display:none!important}
+      header,.hero,.article-section,.checkout-form,.summary-card,.brand-section,.marquee,.pb-videos,.site-footer,.cz-section{display:none!important}
       #successCard{display:block!important;background:#fff!important;border:2px solid #333!important;color:#000!important}
       .info-cell{border:1px solid #ccc!important;background:#f9f9f9!important}
       p,span,h2{color:#000!important}
@@ -307,7 +318,7 @@
           <div>
             <label class="label">الولاية <span class="text-purple-500">*</span></label>
             <select id="wilaya" required class="field">
-              <option value="">��� اختر الولاية —</option>
+              <option value="">— اختر الولاية —</option>
               <option>01 - أدرار</option><option>02 - الشلف</option><option>03 - الأغواط</option>
               <option>04 - أم البواقي</option><option>05 - باتنة</option><option>06 - بجاية</option>
               <option>07 - بسكرة</option><option>08 - بشار</option><option>09 - البليدة</option>
@@ -519,7 +530,7 @@
           </div>
           <div class="trust-chip flex-col text-center gap-1.5">
             <svg class="w-5 h-5 text-purple-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-            <span>توصيل 69 ولا��ة</span>
+            <span>توصيل 69 ولاية</span>
           </div>
           <div class="trust-chip flex-col text-center gap-1.5">
             <svg class="w-5 h-5 text-purple-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
@@ -613,7 +624,7 @@
             </div>
             <div>
               <label class="cz-lbl">رقم الهاتف</label>
-              <input id="czPhone" type="tel" class="cz-input mono" placeholder="صفر . خمسة . خمسة وخمسون . أربعة وأربعون . اثنان وثلاثون . أحد عشر"/>
+              <input id="czPhone" type="tel" class="cz-input mono" placeholder="0559123456"/>
             </div>
             <div class="grid sm:grid-cols-2 gap-4">
               <div>
@@ -666,7 +677,7 @@
             </label>
           </div>
 
-          <label class="cz-lbl">المقاس (سم) — الطول × العرض × الا��تفاع</label>
+          <label class="cz-lbl">المقاس (سم) — الطول × العرض × الارتفاع</label>
           <div class="grid grid-cols-3 gap-3 mb-5">
             <input id="czLen" type="number" min="1" class="cz-input mono text-center" placeholder="الطول"/>
             <input id="czWidth" type="number" min="1" class="cz-input mono text-center" placeholder="العرض"/>
@@ -775,6 +786,7 @@
     <span><span class="dot"></span> PrintBag DZ</span>
   </div>
 </div>
+
 <!-- ===== قسم فيديوهات الشرح ===== -->
 <section class="pb-videos" dir="rtl">
   <h2 class="pb-videos__title">شاهد كيف نعمل ولماذا يثق بنا الزبائن</h2>
@@ -784,14 +796,29 @@
     <div class="pb-video">
       <iframe src="https://www.youtube.com/embed/YSh-pSDsUWc"
         title="فيديو شرح 1 — PrintBag DZ"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowfullscreen></iframe>
+        frameborder="0"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+        loading="lazy"></iframe>
     </div>
     <div class="pb-video">
       <iframe src="https://www.youtube.com/embed/FA54q5SrEgU"
         title="فيديو شرح 2 — PrintBag DZ"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowfullscreen></iframe>
+        frameborder="0"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+        loading="lazy"></iframe>
+    </div>
+    <div class="pb-video">
+      <iframe src="https://www.youtube.com/embed/BMjI4iiLkhs"
+        title="فيديو شرح 3 — PrintBag DZ"
+        frameborder="0"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+        loading="lazy"></iframe>
     </div>
   </div>
 
@@ -805,17 +832,6 @@
   </a>
 </section>
 
-<style>
-.pb-videos{padding:56px 20px;text-align:center;background:#0a0612;border-top:1px solid rgba(139,92,246,.18)}
-.pb-videos__title{font-size:28px;font-weight:800;margin:0 0 8px;color:#fff;font-family:'Cairo',sans-serif}
-.pb-videos__sub{color:#c4b5fd;margin:0 0 32px;font-size:16px;font-family:'Cairo',sans-serif}
-.pb-videos__grid{display:grid;grid-template-columns:repeat(2,minmax(0,300px));gap:20px;justify-content:center;max-width:680px;margin:0 auto}
-.pb-video{position:relative;width:100%;aspect-ratio:9/16;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.4);background:#000}
-.pb-video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-.pb-videos__wa{display:inline-flex;align-items:center;gap:10px;margin-top:32px;padding:14px 28px;background:#25D366;color:#fff;font-size:17px;font-weight:700;text-decoration:none;border-radius:50px;font-family:'Cairo',sans-serif;box-shadow:0 6px 18px rgba(37,211,102,.4);transition:transform .15s ease,box-shadow .15s ease}
-.pb-videos__wa:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(37,211,102,.5)}
-@media (max-width:640px){.pb-videos__grid{grid-template-columns:minmax(0,320px)}.pb-videos__title{font-size:22px}}
-</style>
 <!-- FOOTER -->
 <footer class="site-footer relative z-10 mt-2">
   <div class="footer-blob"></div>
