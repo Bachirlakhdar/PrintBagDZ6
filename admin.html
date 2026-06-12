@@ -47,6 +47,10 @@
     .btn-print-order:hover{background:rgba(139,92,246,.15)}
     .btn-delete-order{color:#fca5a5;border-color:rgba(239,68,68,.3)}
     .btn-delete-order:hover{background:rgba(239,68,68,.1)}
+    .btn-home{display:inline-flex;align-items:center;gap:6px;color:#c4b5fd;font-size:.85rem;
+      font-weight:700;text-decoration:none;border:1px solid rgba(139,92,246,.3);
+      padding:9px 16px;border-radius:10px;transition:.2s;background:rgba(124,58,237,.08)}
+    .btn-home:hover{background:rgba(124,58,237,.2);border-color:rgba(139,92,246,.5);color:#fff}
     @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
     .fade-up{animation:fadeUp .4s ease forwards}
     ::-webkit-scrollbar{width:6px;height:6px}
@@ -65,19 +69,27 @@
 
 <!-- LOGIN -->
 <div id="loginScreen" class="min-h-screen flex items-center justify-center p-6 relative z-10">
-  <div class="w-full max-w-sm glass rounded-3xl p-8 fade-up">
-    <div class="text-center mb-8">
-      <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-600 to-purple-900 flex items-center justify-center text-2xl mx-auto mb-4">🔐</div>
-      <h1 class="text-xl font-black">لوحة تحكم الإدارة</h1>
-      <p class="text-purple-500 text-sm mt-1">PrintBag DZ — Admin Access</p>
+  <div class="w-full max-w-sm fade-up">
+    <div class="mb-4">
+      <a href="index.html" class="btn-home">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l-7 7 7 7M2 12h20"/></svg>
+        الرجوع للصفحة الرئيسية
+      </a>
     </div>
-    <div class="space-y-4">
-      <div><label class="block text-purple-400 text-xs font-bold mb-2">ادخل كلمة السر : <span class="text-amber-400 font-black mono">printbag</span></label>
-        <input id="passwordInput" type="password" placeholder="printbag" class="field" onkeydown="if(event.key==='Enter')checkPassword()"/></div>
-      <p id="loginError" class="text-red-400 text-sm text-center min-h-[1.2rem]"></p>
-      <button onclick="checkPassword()" class="btn-purple w-full py-3 rounded-xl font-black text-lg">دخول</button>
+    <div class="glass rounded-3xl p-8">
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-600 to-purple-900 flex items-center justify-center text-2xl mx-auto mb-4">🔐</div>
+        <h1 class="text-xl font-black">لوحة تحكم الإدارة</h1>
+        <p class="text-purple-500 text-sm mt-1">PrintBag DZ — Admin Access</p>
+      </div>
+      <div class="space-y-4">
+        <div><label class="block text-purple-400 text-xs font-bold mb-2">ادخل كلمة السر : <span class="text-amber-400 font-black mono">printbag</span></label>
+          <input id="passwordInput" type="password" placeholder="printbag" class="field" onkeydown="if(event.key==='Enter')checkPassword()"/></div>
+        <p id="loginError" class="text-red-400 text-sm text-center min-h-[1.2rem]"></p>
+        <button onclick="checkPassword()" class="btn-purple w-full py-3 rounded-xl font-black text-lg">دخول</button>
+      </div>
+      <p class="text-center text-xs text-purple-900 mt-5">🔐 محمي بكلمة سر خاصة</p>
     </div>
-    <p class="text-center text-xs text-purple-900 mt-5">🔐 محمي بكلمة سر خاصة</p>
   </div>
 </div>
 
@@ -91,6 +103,10 @@
         <span class="font-black text-purple-100">Admin Dashboard — PrintBag DZ</span>
       </div>
       <div class="flex items-center gap-3">
+        <a href="index.html" class="btn-home">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l-7 7 7 7M2 12h20"/></svg>
+          الصفحة الرئيسية
+        </a>
         <button id="exportBtn" onclick="exportCSV()" class="action-btn btn-print-order text-sm px-4 py-2">📥 تصدير CSV</button>
         <button onclick="logout()" class="text-sm border border-purple-800 text-purple-400 hover:bg-purple-900/30 transition px-4 py-2 rounded-lg font-semibold">خروج</button>
       </div>
